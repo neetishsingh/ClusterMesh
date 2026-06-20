@@ -1,0 +1,120 @@
+syntax = "proto3";
+
+package mesh;
+
+// Agent connects to Driver on this service.
+service Driver {
+  rpc RegisterNode(RegisterRequest) returns (RegisterResponse);
+  rpc Heartbeat(HeartbeatRequest) returns (HeartbeatResponse);
+  rpc ReportResources(ResourceReport) returns (Ack);
+  rpc PreemptionWarning(PreemptionRequest) returns (Ack);
+  rpc TaskProgress(TaskProgressReport) returns (Ack);
+  rpc TaskComplete(TaskCompleteReport) returns (Ack);
+}
+
+// Driver calls back to each Agent on this service.
+service Agent {
+  rpc AssignTask(TaskAssignment) returns (Ack);
+  rpc CancelTask(TaskCancelRequest) returns (Ack);
+  rpc PauseTask(TaskPauseRequest) returns (Ack);
+  rpc InstallLibrary(LibraryInstallRequest) returns (Ack);
+}
+
+message RegisterRequest {
+  string node_id = 1;
+  string hostname = 2;
+  string agent_address = 3;
+  string os_name = 4;
+  string location = 5;
+  bool preemptible = 6;
+  ResourceReport resources = 7;
+  repeated string libraries = 8;
+}
+
+message RegisterResponse {
+  bool accepted = 1;
+  string message = 2;
+  double heartbeat_interval_seconds = 3;
+}
+
+message HeartbeatRequest {
+  string node_id = 1;
+  double timestamp = 2;
+}
+
+message HeartbeatResponse {
+  bool ok = 1;
+  string node_state = 2;
+}
+
+message ResourceReport {
+  string node_id = 1;
+  int32 cpu_cores_total = 2;
+  double cpu_cores_free = 3;
+  double ram_gb_total = 4;
+  double ram_gb_free = 5;
+  int32 gpu_count = 6;
+  double vram_gb_free = 7;
+  string cuda_version = 8;
+  double network_gbps = 9;
+  double battery_pct = 10;
+  double cpu_utilization = 11;
+  bool user_active = 12;
+  int32 cpu_cores_physical = 13;
+  string host_metrics_json = 14;
+}
+
+message PreemptionRequest {
+  string node_id = 1;
+  double cpu_utilization = 2;
+  string reason = 3;
+}
+
+message TaskProgressReport {
+  string task_id = 1;
+  string node_id = 2;
+  double progress = 3;
+  double total_work = 4;
+  string state_json = 5;
+}
+
+message TaskCompleteReport {
+  string task_id = 1;
+  string node_id = 2;
+  bool success = 3;
+  string result_json = 4;
+  string error = 5;
+}
+
+message TaskAssignment {
+  string task_id = 1;
+  string job_id = 2;
+  string task_name = 3;
+  double cpu_cores = 4;
+  double ram_gb = 5;
+  int32 gpu_count = 6;
+  bool checkpoint = 7;
+  double checkpoint_interval = 8;
+  double total_work = 9;
+  double resume_progress = 10;
+  string resume_state_json = 11;
+}
+
+message TaskCancelRequest {
+  string task_id = 1;
+}
+
+message TaskPauseRequest {
+  string task_id = 1;
+  string reason = 2;
+}
+
+message LibraryInstallRequest {
+  string package_name = 1;
+  string version = 2;
+}
+
+message Ack {
+  bool ok = 1;
+  string message = 2;
+}

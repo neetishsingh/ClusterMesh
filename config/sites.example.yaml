@@ -1,0 +1,21 @@
+# ComputeMesh multi-site mesh VPN configuration
+# Copy to sites.yaml and customize per deployment.
+
+site: bangalore
+
+relay:
+  listen: "0.0.0.0:6000"
+  public: "bangalore.example.com:6000"   # address remote agents use
+
+peers:
+  - site: london
+    region: eu-west
+    relay: london.example.com:6000
+    grpc: london.example.com:50050
+    latency_ms: 120
+
+  - site: aws-us-east
+    region: us-east-1
+    relay: aws-relay.example.com:6000
+    grpc: aws-driver.example.com:50050
+    latency_ms: 200

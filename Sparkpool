@@ -1,0 +1,592 @@
+This can become a full platform. Think of it as an Operating System for Enterprise Compute rather than a Spark competitor.
+
+Product Vision
+
+ComputeMesh (working name)
+
+Turn every laptop, desktop, VM, GPU workstation, and server into a single elastic, fault-tolerant compute cloud.
+
+The Problem
+
+Organizations have:
+
+500 laptops
+100 desktops
+50 VMs
+20 GPU workstations
+
+Average utilization:
+
+CPU: 10-20%
+RAM: 30-50%
+GPU: 5-10%
+
+Millions of dollars of hardware sit idle.
+
+Current solutions:
+
+Databricks → creates new compute
+Kubernetes → needs dedicated servers
+Spark → needs dedicated workers
+Ray → needs managed nodes
+
+Nobody fully solves:
+
+"Use all idle enterprise hardware automatically and safely."
+
+High-Level Architecture
+                    Control Plane
+                           │
+         ┌─────────────────┼─────────────────┐
+         │                 │                 │
+ Metadata Service    Scheduler Service    Auth Service
+         │                 │                 │
+         └─────────────────┼─────────────────┘
+                           │
+                     Driver Cluster
+                  (3-node HA cluster)
+                           │
+      ┌────────────────────┼────────────────────┐
+      │                    │                    │
+   Agent-1             Agent-2              Agent-3
+  Laptop               Desktop                 VM
+      │                    │                    │
+ Resource Manager     Container Runtime      GPU Runtime
+Components
+1. Agent
+
+Install:
+
+curl install.sh
+
+or
+
+msi installer
+
+Supported:
+
+Windows
+Linux
+Mac
+VMware
+EC2
+Azure VM
+Bare Metal
+Agent Services
+Resource Monitor
+
+Reports every second:
+
+CPU %
+RAM free
+Disk free
+Network
+GPU usage
+VRAM
+Battery
+Temperature
+User activity
+Executor
+
+Executes:
+
+Python
+Shell
+SQL
+Containers
+Spark-like tasks
+ML workloads
+Library Manager
+
+Cluster-level:
+
+pandas
+numpy
+torch
+tensorflow
+pyarrow
+
+Tracks:
+
+Version
+Size
+Dependencies
+Conflicts
+Health Manager
+
+Heartbeats:
+
+every 2 seconds
+
+to driver.
+
+Node Discovery
+Local Network
+
+mDNS:
+
+Laptop discovers Laptop
+Desktop discovers VM
+Enterprise
+
+Use:
+
+gRPC
+Mesh VPN
+Tailscale-like networking
+
+Nodes can exist:
+
+Bangalore Office
+London Office
+AWS
+Azure
+On-prem
+
+all inside one cluster.
+
+Driver Node
+
+Equivalent of Spark Driver.
+
+Responsibilities:
+
+Cluster State
+Node Health
+Resources
+Job States
+Task Metadata
+DAG Planner
+Scheduler
+Failure Recovery
+Data Locality
+Resource Prediction
+Scheduler
+
+The scheduler is your biggest differentiator.
+
+It should understand:
+
+CPU
+Need 32 cores
+Memory
+Need 128GB
+GPU
+Need:
+2 GPUs
+24GB VRAM
+CUDA 12
+Network
+Need:
+10Gbps
+Battery
+Do not use if
+Battery < 60%
+Resource Classes
+CPU Pool
+
+Office desktops.
+
+Memory Pool
+
+Large RAM servers.
+
+GPU Pool
+
+AI workstations.
+
+Night Pool
+
+Employee laptops after office hours.
+
+Dynamic Cluster Formation
+
+9AM:
+
+100 nodes
+
+6PM:
+
+500 nodes
+
+11PM:
+
+1000 nodes
+
+Cluster auto-expands.
+
+The Most Important Part
+Fault Tolerance
+
+This is where your system can be better than Spark.
+
+Problem
+
+Laptop suddenly goes offline.
+
+Task-23 running
+Node dies
+
+What happens?
+
+Solution 1
+Heartbeats
+
+Every node:
+
+Heartbeat every 2 seconds
+
+Miss:
+
+3 heartbeats
+
+Node:
+
+SUSPECTED DEAD
+
+Miss:
+
+5 heartbeats
+
+Node:
+
+DEAD
+Solution 2
+Task Checkpointing
+
+Every task periodically saves:
+
+Progress
+State
+Variables
+Offsets
+Partitions
+
+Example:
+
+Task:
+1 billion records
+
+Progress:
+650 million complete
+
+Node dies.
+
+Restart:
+
+651 million
+
+not:
+
+0
+Solution 3
+Task Replication
+
+Critical jobs:
+
+Replica Count = 2
+
+Task runs:
+
+Node5
+Node11
+
+Node5 dies.
+
+Node11 continues.
+
+No interruption.
+
+Solution 4
+Work Stealing
+
+Node dies:
+
+Task1
+Task2
+Task3
+
+Scheduler:
+
+Node8 steals Task1
+Node12 steals Task2
+Node20 steals Task3
+
+Execution continues.
+
+Solution 5
+Speculative Execution
+
+Like Spark.
+
+Task taking too long:
+
+Node5
+
+Duplicate:
+
+Node15
+
+Whichever finishes first wins.
+
+Solution 6
+Distributed State Store
+
+Never keep metadata only in driver memory.
+
+Store:
+
+Job State
+Node State
+Task State
+Checkpoints
+
+in:
+
+Postgres
+Redis
+Raft Cluster
+
+If driver dies:
+
+new driver can resume.
+
+Solution 7
+Driver HA
+
+Single driver is dangerous.
+
+Create:
+
+Driver1
+Driver2
+Driver3
+
+Leader election:
+
+Raft
+
+Leader dies:
+
+Driver2 becomes leader.
+
+No downtime.
+
+Solution 8
+Automatic Rebalancing
+
+Suppose:
+
+Node1
+64 cores
+2 free
+
+Node2:
+
+64 cores
+60 free
+
+Scheduler migrates tasks.
+
+Solution 9
+Preemptible Resources
+
+Employee starts using laptop.
+
+CPU:
+
+20%
+→
+95%
+
+Agent sends:
+
+PREEMPTION WARNING
+
+Scheduler:
+
+Checkpoint
+Pause
+Move
+Resume
+
+No user impact.
+
+Solution 10
+Distributed Memory Fabric
+
+Suppose:
+
+Node1:
+32GB free
+
+Node2:
+64GB free
+
+Node3:
+16GB free
+
+Expose:
+
+112GB logical memory pool
+
+Driver allocates across nodes.
+
+Very difficult but huge differentiator.
+
+Resource Allocation Engine
+
+Every node gets:
+
+CPU Score
+Memory Score
+GPU Score
+Reliability Score
+Latency Score
+Battery Score
+
+Overall:
+
+NodeScore =
+0.35 CPU
++0.25 Memory
++0.15 GPU
++0.15 Reliability
++0.10 Network
+
+Scheduler chooses highest score.
+
+UI
+Dashboard
+---------------------------------
+ComputeMesh
+---------------------------------
+
+Nodes: 512
+
+Healthy: 500
+Busy: 10
+Offline: 2
+
+CPU:
+6200 cores
+
+RAM:
+28 TB
+
+GPU:
+96 GPUs
+
+Savings:
+$650,000
+---------------------------------
+Cluster Topology
+Office
+ ├── Floor1
+ ├── Floor2
+ ├── Data Center
+ └── AWS
+
+Live map.
+
+Node Details
+
+Click:
+
+Hostname
+IP
+OS
+CPU
+RAM
+GPU
+Battery
+Processes
+Containers
+Libraries
+Spark-like DAG UI
+Read CSV
+     ↓
+Filter
+     ↓
+Join
+     ↓
+Aggregate
+     ↓
+Write
+
+Every stage:
+
+Execution Time
+Retries
+Node
+Failures
+Memory
+CPU
+Failure UI
+Task-203
+
+Node:
+LAPTOP-55
+
+Failure:
+Offline
+
+Recovery:
+Migrated to DESKTOP-11
+
+Lost Time:
+3 seconds
+Process Explorer
+
+Like Windows Task Manager.
+
+Can:
+
+Kill
+Pause
+Migrate
+Throttle
+Library Manager
+
+Cluster:
+
+Python 3.12
+Torch 2.8
+Pandas 2.3
+CUDA 12.8
+
+Install:
+
+Entire Cluster
+GPU Pool
+Specific Nodes
+Developer SDK
+@mesh.task(
+    cpu=16,
+    ram="64GB",
+    gpu=1,
+    replicas=2,
+    checkpoint=True
+)
+def train():
+    pass
+
+Submit:
+
+mesh.submit(train)
+Killer Features
+Idle Compute Harvesting
+GPU Sharing
+Live Discovery
+Fault Tolerant Scheduling
+Self-Healing Cluster
+Work Stealing
+Preemption Handling
+Checkpoint Recovery
+Multi-office Clustering
+Cost Savings Analytics
+Vision Statement
+
+ComputeMesh is a distributed compute operating system that transforms every laptop, desktop, VM, and GPU in an enterprise into a fault-tolerant elastic cloud, automatically discovering resources, scheduling workloads, recovering from failures, and utilizing idle compute that would otherwise be wasted.
+
+If built properly, this is not merely a scheduler. It becomes an Enterprise Compute Fabric—a new layer sitting between employee hardware and cloud providers, enabling organizations to treat all existing hardware as one massive, self-healing supercomputer.

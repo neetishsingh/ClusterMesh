@@ -1,0 +1,44 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-slate-50 text-slate-900 antialiased;
+  }
+}
+
+@layer components {
+  .page-title {
+    @apply text-2xl font-semibold tracking-tight text-slate-900;
+  }
+  .page-subtitle {
+    @apply mt-1 text-sm text-slate-500;
+  }
+  .card {
+    @apply rounded-xl border border-slate-200 bg-white shadow-card;
+  }
+  .btn-primary {
+    @apply inline-flex items-center gap-2 rounded-lg bg-mesh-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-mesh-700 disabled:opacity-50;
+  }
+  .btn-secondary {
+    @apply inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-50;
+  }
+  .btn-danger {
+    @apply inline-flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-700 transition hover:bg-red-100;
+  }
+  .table-head {
+    @apply border-b border-slate-200 bg-slate-50/80 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500;
+  }
+  .table-cell {
+    @apply border-b border-slate-100 px-4 py-3 text-sm text-slate-700;
+  }
+}
+
+/* Scrollbar styling for log panel */
+.log-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+.log-scroll::-webkit-scrollbar-thumb {
+  @apply rounded bg-slate-300;
+}
