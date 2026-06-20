@@ -9,7 +9,7 @@ The project is initialized locally with git. Remote: **https://github.com/neetis
 | `git init` + initial commit on `main` | Done |
 | Remote `origin` → `git@github.com:neetishsingh/ClusterMesh.git` | Configured |
 | GitHub repo created | **Not yet** — create it once, then push |
-| Push to GitHub | Waiting on repo creation |
+| Push to GitHub | Done — https://github.com/neetishsingh/ClusterMesh |
 
 SSH auth to GitHub works (`neetishsingh` account).
 
@@ -88,6 +88,45 @@ git push
 | Error | Fix |
 |-------|-----|
 | `Repository not found` | Create empty repo on GitHub first (Option A) |
+| `Permission denied to deploykey` | Your default SSH key is a **deploy key** (read-only, one repo). Use HTTPS instead (see below) |
 | `Permission denied (publickey)` | Add SSH key: https://github.com/settings/keys |
+| `Invalid username or token` (HTTPS) | Run `gh auth login` then `gh auth setup-git` |
 | `gh auth login` required | Run Option B step 1 |
 | Large files rejected | Keep `node_modules/` and `.venv/` out of git (already ignored) |
+
+### Deploy key error (most common on this machine)
+
+If push fails with:
+
+```text
+ERROR: Permission to neetishsingh/ClusterMesh.git denied to deploykey
+```
+
+Your `~/.ssh/id_ed25519` key is registered as a **deploy key** on another repo (`applic`), not as your personal GitHub SSH key. Deploy keys cannot push to other repositories.
+
+**Fix — use HTTPS via GitHub CLI** (already logged in as `neetishsingh`):
+
+```bash
+gh auth login          # once, if not logged in
+gh auth setup-git      # wires git to use gh token
+git remote set-url origin https://github.com/neetishsingh/ClusterMesh.git
+git push -u origin main
+```
+
+**Alternative — new personal SSH key:**
+
+```bash
+ssh-keygen -t ed25519 -C "neetishsingh97@gmail.com" -f ~/.ssh/id_ed25519_github
+```
+
+Add `~/.ssh/id_ed25519_github.pub` at https://github.com/settings/ssh/new, then create `~/.ssh/config`:
+
+```sshconfig
+Host github.com
+  HostName github.com
+  User git
+  IdentityFile ~/.ssh/id_ed25519_github
+  IdentitiesOnly yes
+```
+
+Then use SSH remote: `git@github.com:neetishsingh/ClusterMesh.git`
