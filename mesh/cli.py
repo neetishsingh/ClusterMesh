@@ -37,13 +37,7 @@ def cmd_join(args: argparse.Namespace) -> int:
     from mesh.agent.config import AgentConfig
     from mesh.worker.runtime import WorkerRuntime
 
-    driver = args.driver or os.environ.get("MESH_DRIVER_ADDRESS")
-    if not driver:
-        print("Error: driver address required (e.g. 192.168.1.10:50050)", file=sys.stderr)
-        return 1
-
     config = AgentConfig.from_env()
-    config.driver_address = driver
     if args.location:
         config.location = args.location
     if args.node_id:
@@ -52,10 +46,11 @@ def cmd_join(args: argparse.Namespace) -> int:
         config.agent_address = args.agent_addr
     config.preemptible = not args.no_preempt
 
-    if args.discover and not _require_zeroconf("Auto-discovery"):
-        return 1
+    driver = args.driver or os.environ.get("MESH_DRIVER_ADDRESS")
 
     if args.discover:
+        if not _require_zeroconf("Auto-discovery"):
+            return 1
         from mesh.discovery.mdns import discover_driver
 
         record = discover_driver(timeout=8.0)
@@ -66,6 +61,17 @@ def cmd_join(args: argparse.Namespace) -> int:
         if not args.location:
             config.location = record.site
         print(f"Discovered driver at {record.grpc_address} (site={record.site})")
+    elif driver:
+        config.driver_address = driver
+    elif config.driver_address:
+        pass
+    else:
+        print(
+            "Error: driver address required (e.g. 192.168.1.10:50050) "
+            "or use --discover",
+            file=sys.stderr,
+        )
+        return 1
 
     runtime = WorkerRuntime(
         config,
