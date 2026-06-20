@@ -42,16 +42,31 @@ class LibraryManager:
             spec = package_name
         else:
             spec = f"{package_name}=={ver}"
+        heavy = package_name.lower() in {
+            "pyspark",
+            "tensorflow",
+            "torch",
+            "torchvision",
+            "torchaudio",
+        }
+        timeout = 900 if heavy else 300
         result = subprocess.run(
             [sys.executable, "-m", "pip", "install", spec],
             check=False,
             capture_output=True,
             text=True,
-            timeout=300,
+            timeout=timeout,
         )
         log = "\n".join(filter(None, [result.stdout.strip(), result.stderr.strip()]))
         if result.returncode != 0:
-            raise RuntimeError(log or f"pip install failed (exit {result.returncode})")
+            hint = ""
+            if package_name.lower() == "pyspark":
+                hint = (
+                    "\n\nPySpark tips: install Java 11+ on the worker "
+                    "(brew install openjdk@17), ensure pip can reach PyPI, "
+                    "and retry: pip install pyspark"
+                )
+            raise RuntimeError((log or f"pip install failed (exit {result.returncode})") + hint)
         self.scan()
         installed = self._installed.get(package_name.lower())
         lib = installed or InstalledLibrary(

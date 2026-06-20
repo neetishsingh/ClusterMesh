@@ -18,6 +18,7 @@ service Agent {
   rpc CancelTask(TaskCancelRequest) returns (Ack);
   rpc PauseTask(TaskPauseRequest) returns (Ack);
   rpc InstallLibrary(LibraryInstallRequest) returns (Ack);
+  rpc RunShellCommand(ShellCommandRequest) returns (ShellCommandResponse);
 }
 
 message RegisterRequest {
@@ -112,6 +113,21 @@ message TaskPauseRequest {
 message LibraryInstallRequest {
   string package_name = 1;
   string version = 2;
+}
+
+message ShellCommandRequest {
+  string command = 1;
+  string working_dir = 2;
+  int32 timeout_seconds = 3;
+}
+
+message ShellCommandResponse {
+  bool ok = 1;
+  int32 exit_code = 2;
+  string stdout = 3;
+  string stderr = 4;
+  string message = 5;
+  double duration_seconds = 6;
 }
 
 message Ack {

@@ -345,6 +345,11 @@ class AgentStub:
                 request_serializer=mesh__pb2.LibraryInstallRequest.SerializeToString,
                 response_deserializer=mesh__pb2.Ack.FromString,
                 _registered_method=True)
+        self.RunShellCommand = channel.unary_unary(
+                '/mesh.Agent/RunShellCommand',
+                request_serializer=mesh__pb2.ShellCommandRequest.SerializeToString,
+                response_deserializer=mesh__pb2.ShellCommandResponse.FromString,
+                _registered_method=True)
 
 
 class AgentServicer:
@@ -375,6 +380,12 @@ class AgentServicer:
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def RunShellCommand(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_AgentServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -397,6 +408,11 @@ def add_AgentServicer_to_server(servicer, server):
                     servicer.InstallLibrary,
                     request_deserializer=mesh__pb2.LibraryInstallRequest.FromString,
                     response_serializer=mesh__pb2.Ack.SerializeToString,
+            ),
+            'RunShellCommand': grpc.unary_unary_rpc_method_handler(
+                    servicer.RunShellCommand,
+                    request_deserializer=mesh__pb2.ShellCommandRequest.FromString,
+                    response_serializer=mesh__pb2.ShellCommandResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -508,6 +524,33 @@ class Agent:
             '/mesh.Agent/InstallLibrary',
             mesh__pb2.LibraryInstallRequest.SerializeToString,
             mesh__pb2.Ack.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def RunShellCommand(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/mesh.Agent/RunShellCommand',
+            mesh__pb2.ShellCommandRequest.SerializeToString,
+            mesh__pb2.ShellCommandResponse.FromString,
             options,
             channel_credentials,
             insecure,

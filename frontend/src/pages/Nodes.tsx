@@ -3,6 +3,7 @@ import { Header } from "@/components/Header";
 import { Badge } from "@/components/Badge";
 import { ProgressBar } from "@/components/ProgressBar";
 import { HostMetricsPanel } from "@/components/HostMetricsPanel";
+import { NodeTerminal } from "@/components/NodeTerminal";
 import { useShell } from "@/components/Layout";
 import { usePolling } from "@/api/useStream";
 import { api, NodeRow } from "@/api/client";
@@ -149,6 +150,7 @@ export function NodesPage() {
                         <tr key={`${n.node_id}-detail`}>
                           <td colSpan={9} className="p-0">
                             <HostMetricsPanel node={n} />
+                            <NodeTerminal node={n} />
                           </td>
                         </tr>
                       )}

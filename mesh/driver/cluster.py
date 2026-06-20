@@ -21,6 +21,7 @@ class RemoteAgent:
     cancel_task: Callable
     pause_task: Callable
     install_library: Callable
+    run_shell: Callable
 
 
 @dataclass

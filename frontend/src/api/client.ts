@@ -162,6 +162,11 @@ export const api = {
     request<{ ok: boolean }>(`/nodes/${id}/pause`, { method: "POST" }),
   drainNode: (id: string) =>
     request<{ ok: boolean }>(`/nodes/${id}/drain`, { method: "POST" }),
+  runNodeShell: (nodeId: string, command: string, cwd = "", timeout = 60) =>
+    request<ShellResult>(`/nodes/${nodeId}/shell`, {
+      method: "POST",
+      body: JSON.stringify({ command, cwd, timeout }),
+    }),
   jobs: () => request<{ jobs: JobRow[] }>("/jobs").then((r) => r.jobs),
   job: (id: string) => request<JobRow>(`/jobs/${id}`),
   cancelJob: (id: string) =>
@@ -271,6 +276,18 @@ export interface MemoryAllocation {
   owner: string;
   pinned: boolean;
   segments: { node_id: string; hostname: string; size_gb: number; location: string }[];
+}
+
+export interface ShellResult {
+  ok: boolean;
+  exit_code?: number;
+  stdout?: string;
+  stderr?: string;
+  message?: string;
+  error?: string;
+  duration_seconds?: number;
+  hostname?: string;
+  node_id?: string;
 }
 
 export interface MeshPeer {

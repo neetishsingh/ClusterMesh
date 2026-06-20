@@ -95,6 +95,9 @@ export function LibrariesPage() {
             <Plus className="h-4 w-4" />
             Install Package
           </h2>
+          <p className="mt-2 text-xs text-slate-500">
+            PySpark is large (~300MB) and needs Java 11+ on each worker. Install Java first, then pyspark.
+          </p>
           <div className="mt-4 flex flex-wrap items-end gap-3">
             <div>
               <label className="mb-1 block text-xs font-medium text-slate-500">Package</label>
@@ -196,8 +199,17 @@ export function LibrariesPage() {
                         </span>
                       )}
                     </td>
-                    <td className="table-cell max-w-md truncate font-mono text-xs text-slate-600" title={r.log || r.message}>
-                      {r.message}
+                    <td className="table-cell max-w-md font-mono text-xs text-slate-600">
+                      <details className="cursor-pointer">
+                        <summary className="truncate" title={r.message}>
+                          {r.ok ? r.message : r.message.split("\n")[0]}
+                        </summary>
+                        {(r.log || r.message) && (
+                          <pre className="mt-2 max-h-48 overflow-auto whitespace-pre-wrap break-all rounded bg-slate-100 p-2 text-[11px] text-slate-700">
+                            {r.log || r.message}
+                          </pre>
+                        )}
+                      </details>
                     </td>
                   </tr>
                 ))}

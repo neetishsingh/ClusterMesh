@@ -84,6 +84,65 @@ def create_app(ctx: Optional[AppContext] = None, auth: Optional[AuthConfig] = No
         event_bus.info("cluster", f"Drain started for node {node_id}", node_id=node_id)
         return {"ok": True, "action": "drain", "node_id": node_id}
 
+    @app.post("/api/v1/nodes/{node_id}/shell")
+    def run_node_shell(node_id: str, body: dict):
+        import socket
+
+        from mesh.agent.shell import run_shell_command
+        from mesh.proto import mesh_pb2
+
+        command = str(body.get("command", "")).strip()
+        if not command:
+            return {"ok": False, "error": "command required"}
+        cwd = str(body.get("cwd", "") or "")
+        timeout = int(body.get("timeout", 60) or 60)
+
+        node = app_context.cluster.get_node(node_id)
+        if not node:
+            return {"ok": False, "error": "node not found"}
+
+        remote = app_context.cluster.get_remote(node_id)
+        if remote:
+            try:
+                resp = remote.run_shell(
+                    mesh_pb2.ShellCommandRequest(
+                        command=command,
+                        working_dir=cwd,
+                        timeout_seconds=timeout,
+                    )
+                )
+                event_bus.info(
+                    "shell",
+                    f"Ran on {node.hostname}: {command[:120]}",
+                    node_id=node_id,
+                    exit_code=resp.exit_code,
+                )
+                return {
+                    "ok": resp.ok,
+                    "exit_code": resp.exit_code,
+                    "stdout": resp.stdout,
+                    "stderr": resp.stderr,
+                    "message": resp.message,
+                    "duration_seconds": resp.duration_seconds,
+                    "hostname": node.hostname,
+                    "node_id": node_id,
+                }
+            except Exception as exc:
+                event_bus.error("shell", f"Failed on {node.hostname}: {exc}", node_id=node_id)
+                return {"ok": False, "error": str(exc), "node_id": node_id}
+
+        if node.hostname == socket.gethostname():
+            result = run_shell_command(command, cwd, timeout)
+            event_bus.info(
+                "shell",
+                f"Ran locally on {node.hostname}: {command[:120]}",
+                node_id=node_id,
+                exit_code=result["exit_code"],
+            )
+            return {**result, "hostname": node.hostname, "node_id": node_id}
+
+        return {"ok": False, "error": "node has no remote agent connection", "node_id": node_id}
+
     @app.get("/api/v1/jobs")
     def list_jobs():
         return {"jobs": app_context.jobs_payload()}

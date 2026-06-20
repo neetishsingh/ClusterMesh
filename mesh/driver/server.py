@@ -50,6 +50,10 @@ def _make_remote_agent(node_id: str, agent_address: str) -> RemoteAgent:
     def install_library(req: mesh_pb2.LibraryInstallRequest) -> mesh_pb2.Ack:
         return stub.InstallLibrary(req, timeout=120)
 
+    def run_shell(req: mesh_pb2.ShellCommandRequest) -> mesh_pb2.ShellCommandResponse:
+        timeout = max(10, (req.timeout_seconds or 60) + 5)
+        return stub.RunShellCommand(req, timeout=timeout)
+
     return RemoteAgent(
         node_id=node_id,
         agent_address=agent_address,
@@ -57,6 +61,7 @@ def _make_remote_agent(node_id: str, agent_address: str) -> RemoteAgent:
         cancel_task=cancel_task,
         pause_task=pause_task,
         install_library=install_library,
+        run_shell=run_shell,
     )
 
 

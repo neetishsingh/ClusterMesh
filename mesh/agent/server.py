@@ -60,6 +60,23 @@ class AgentServicer(mesh_pb2_grpc.AgentServicer):
         except Exception as exc:
             return mesh_pb2.Ack(ok=False, message=str(exc))
 
+    def RunShellCommand(self, request, context):
+        from mesh.agent.shell import run_shell_command
+
+        result = run_shell_command(
+            request.command,
+            working_dir=request.working_dir,
+            timeout_seconds=request.timeout_seconds or 60,
+        )
+        return mesh_pb2.ShellCommandResponse(
+            ok=result["ok"],
+            exit_code=result["exit_code"],
+            stdout=result["stdout"],
+            stderr=result["stderr"],
+            message=result["message"],
+            duration_seconds=result["duration_seconds"],
+        )
+
 
 class AgentServer:
     def __init__(
