@@ -95,8 +95,13 @@ class MeshPlatform:
         event_bus.info("driver", f"gRPC driver listening on {self.grpc_address}")
 
         if self._mdns:
-            self._mdns.start()
-            event_bus.info("discovery", f"mDNS advertising site '{self.site}'")
+            try:
+                self._mdns.start()
+            except ImportError as exc:
+                logger.error("%s — continuing without mDNS", exc)
+                self._mdns = None
+            else:
+                event_bus.info("discovery", f"mDNS advertising site '{self.site}'")
 
         if self.mesh:
             grpc_target = f"127.0.0.1:{_parse_grpc_port(self.grpc_address)}"

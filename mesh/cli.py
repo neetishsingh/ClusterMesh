@@ -17,6 +17,20 @@ def _setup_logging(verbose: bool) -> None:
     )
 
 
+def _require_zeroconf(feature: str) -> bool:
+    try:
+        import zeroconf  # noqa: F401
+        return True
+    except ImportError:
+        print(
+            f"Error: {feature} requires zeroconf.\n"
+            "  pip install -e \".[discovery]\"\n"
+            "  pip install zeroconf",
+            file=sys.stderr,
+        )
+        return False
+
+
 def cmd_join(args: argparse.Namespace) -> int:
     import os
 
@@ -37,6 +51,9 @@ def cmd_join(args: argparse.Namespace) -> int:
     if args.agent_addr:
         config.agent_address = args.agent_addr
     config.preemptible = not args.no_preempt
+
+    if args.discover and not _require_zeroconf("Auto-discovery"):
+        return 1
 
     if args.discover:
         from mesh.discovery.mdns import discover_driver
@@ -81,6 +98,9 @@ def cmd_join(args: argparse.Namespace) -> int:
 
 
 def cmd_platform(args: argparse.Namespace) -> int:
+    if args.mdns and not _require_zeroconf("mDNS advertising"):
+        return 1
+
     from mesh.api.server import main as platform_main
 
     argv = ["mesh-platform"]
